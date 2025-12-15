@@ -63,7 +63,7 @@ public class ActionHandler {
     public DocumentSet handleFilter(String collectionName, String field, String value)
             throws IOException, InterruptedException {
 
-        return null; // temporaire
+        return apiClient.fetchDocumentsByField(collectionName, field, value,50); //changer la limite6
     }
 
     // -----------------------------------------------------------------------
@@ -81,7 +81,8 @@ public class ActionHandler {
     public boolean handleInsert(String collectionName, Map<String, Object> newDoc)
             throws IOException, InterruptedException {
                 
-        return false; // temporaire
+        String id = apiClient.insertDocument(collectionName, newDoc);
+        return (id != null);
     }
 
     /**
@@ -98,7 +99,8 @@ public class ActionHandler {
     public boolean handleUpdate(String collectionName, String id, Map<String, Object> editedDoc)
             throws IOException, InterruptedException {
 
-        return false; // temporaire
+        //return apiClient.replaceDocument(collectionName, id, editedDoc);
+        //return apiClient.updateDocument(collectionName, id, editedDoc);
     }
 
     /**
@@ -111,6 +113,6 @@ public class ActionHandler {
     public boolean handleDelete(String collectionName, String id)
             throws IOException, InterruptedException {
 
-        return false; // temporaire
+        return apiClient.deleteDocument(collectionName, id);
     }
 }
