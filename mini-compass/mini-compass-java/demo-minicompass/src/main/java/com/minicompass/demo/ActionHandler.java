@@ -101,6 +101,7 @@ public class ActionHandler {
 
         //return apiClient.replaceDocument(collectionName, id, editedDoc);
         //return apiClient.updateDocument(collectionName, id, editedDoc);
+        return false;
     }
 
     /**
