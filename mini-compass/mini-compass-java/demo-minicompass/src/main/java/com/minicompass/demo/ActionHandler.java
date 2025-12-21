@@ -63,7 +63,7 @@ public class ActionHandler {
     public DocumentSet handleFilter(String collectionName, String field, String value)
             throws IOException, InterruptedException {
 
-        return apiClient.fetchDocumentsByField(collectionName, field, value,50); //changer la limite6
+        return apiClient.fetchDocumentsByField(collectionName, field, value,50);
     }
 
     // -----------------------------------------------------------------------
@@ -99,9 +99,7 @@ public class ActionHandler {
     public boolean handleUpdate(String collectionName, String id, Map<String, Object> editedDoc)
             throws IOException, InterruptedException {
 
-        //return apiClient.replaceDocument(collectionName, id, editedDoc);
-        //return apiClient.updateDocument(collectionName, id, editedDoc);
-        return false;
+        return apiClient.replaceDocument(collectionName, id, editedDoc);
     }
 
     /**
