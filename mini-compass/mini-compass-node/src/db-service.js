@@ -46,13 +46,27 @@ async function getDocuments(collectionName, options = {}) {
   let query = {};
 
   // TODO ÉTUDIANT 1 :
-  // Si searchField ET searchValue sont fournis, filtrer les documents.
+  // Si searchField ET searchValue sont fournis, filtrer les documents
+  if (searchField && searchValue !== null && searchValue !== undefined) {
+    let filtreValue = searchValue;
+    // Convertir en nombre ou booléen
+    if (!isNaN(searchValue)) {
+      filtreValue = Number(searchValue);
+    } else if (searchValue === "true" || searchValue === "false") {
+      filtreValue = searchValue === "true";
+    }
+
+    query[searchField] = filtreValue;
+  }
 
   let cursor = db.collection(collectionName).find(query);
 
   // TODO ÉTUDIANT 2 :
-  // Utiliser "skip" pour ignorer un certain nombre de documents
+  // Utiliser "skip" pour ignorer un certain  nombre de documents
   // avant de commencer à les retourner.
+    if (skip > 0) {
+  cursor = cursor.skip(skip);
+}
 
   const docs = await cursor.limit(limit).toArray();
   return docs;
@@ -60,7 +74,7 @@ async function getDocuments(collectionName, options = {}) {
 
 /**
  * Trouve UN document qui correspond au filtre donné.
- *
+ *    
  * Exemples de filtre :
  *   { name: "Alice" }
  *   { codePermanent: "ABC1234" }
@@ -75,8 +89,14 @@ async function findDocument(collectionName, filter, dbName = null) {
 
   // TODO ÉTUDIANT 3 :
   // Utiliser findOne pour récupérer UN document qui correspond au filtre.
-  
-  return null;
+   if (typeof filter !== "object" || filter === null || Array.isArray(filter)) {
+    throw new Error("Le filtre doit être un objet valide");
+  }
+
+  const findDocument = db.collection(collectionName);
+  const document = await findDocument.findOne(filter);
+
+  return document;
 }
 
 /**
@@ -90,7 +110,15 @@ async function findDocument(collectionName, filter, dbName = null) {
 async function hasDocument(collectionName, filter, dbName = null) {
   // TODO ÉTUDIANT 4 :
   // Réutiliser findDocument pour savoir si un document existe.
+  if (typeof filter !== "object" || filter === null || Array.isArray(filter)) {
+  throw new Error("Le filtre doit être un objet valide");
+  }
 
+  const document = await findDocument(collectionName, filter, dbName);
+      
+  if (document) {
+    return true;
+  }
   return false;
 }
 
@@ -113,8 +141,27 @@ async function hasDuplicate(collectionName, fieldName, value, dbName = null) {
   // TODO ÉTUDIANT 5 :
   // Construire un filtre { [fieldName]: value } et compter
   // combien de documents correspondent.
+  // Vérifier que fieldName est un string non vide
+  if (typeof fieldName !== "string" || fieldName.trim() === "") {
+    throw new Error("Le fieldName est un string vide");
+  }
 
-  return false;
+  // Convertir value au bon type (même logique que getDocuments)
+  let filtreValue = value;
+ 
+  if (!isNaN(value) && value !== "" && value !== null) {
+    filtreValue = Number(value);
+  } else if (value === "true" || value === "false") {
+    filtreValue = value === "true";
+  }
+
+  // Construire le filtre
+  const filter = {[fieldName]:filtreValue};
+
+  // Compter combien de documents correspondent
+  const count = await db.collection(collectionName).countDocuments(filter);
+
+  return count;
 }
 
 /**
@@ -128,9 +175,18 @@ async function hasDuplicate(collectionName, fieldName, value, dbName = null) {
 async function insertDocument(collectionName, doc, dbName = null) {
   const db = getDb(dbName);
 
-  // TODO ÉTUDIANT 6 :
+  // TODO ÉTUDIANT 6 : 
   // Utiliser insertOne pour insérer le document.
-
+  if (typeof doc == "object" && Object.keys(doc).length !== 0){
+    const insert = await db.collection(collectionName).insertOne(doc)
+  }else if (typeof doc !== "object") {
+    console.error("Erreur: Doit être un objet");
+  
+  }else if (Object.keys(doc).length == 0) {
+  
+    console.error("Erreur: Objet vide");
+  }
+  
   return null;
 }
 
@@ -145,12 +201,21 @@ async function insertDocument(collectionName, doc, dbName = null) {
 async function deleteDocument(collectionName, id, dbName = null) {
   const db = getDb(dbName);
 
-  // TODO ÉTUDIANT 7 :
-  // Utiliser deleteOne avec un filtre {_id: new ObjectId(id)}.
- 
+  // TODO ÉTUDIANT 7 : 
+  const verifier = await db.collection(collectionName).findOne({_id: new ObjectId(id)})
+  
+  if (verifier == null) {
+    throw new Error("Le document n'existe pas");
+  
+  }else if (ObjectId.isValid(id)) {
+    try {
+      const deleted = await db.collection(collectionName).deleteOne({_id: new ObjectId(id)})
+    } catch (error) {
+      console.error("Erreur", error);
+    }
+  }
   return false;
-}
-
+  }
 /**
  * Remplace complètement un document.
  * ATTENTION : les anciens champs non présents dans newDoc seront perdus.
@@ -164,8 +229,27 @@ async function deleteDocument(collectionName, id, dbName = null) {
 async function replaceDocument(collectionName, id, newDoc, dbName = null) {
   const db = getDb(dbName);
 
-  // TODO ÉTUDIANT 8 :
+  // TODO ÉTUDIANT 8 : 
   // Utiliser replaceOne avec un filtre sur _id.
+  const verif = await db.collection(collectionName).find(newDoc)
+
+  /*try {
+    
+  } catch (error) {
+    console.error("Erreur", error)
+  }*/
+
+  const verifier = await db.collection(collectionName).findOne({_id: new ObjectId(id)})
+  
+  if (verifier == null) {
+    throw new Error("Le document n'existe pas");
+  
+  }else if (ObjectId.isValid(id) && Object.keys(newDoc).length !== 0) {
+    const replace = await db.collection(collectionName).replaceOne({_id: new ObjectId(id)}, newDoc)
+  
+  }else{
+    throw new Error("Modification non effectué");
+  }
 
   return false;
 }
@@ -188,9 +272,17 @@ async function updateDocument(collectionName, id, partialDoc, dbName = null) {
   const db = getDb(dbName);
 
   // TODO ÉTUDIANT 9 :
-  // Utiliser updateOne avec l'opérateur $set.
- 
-  return false;
+  
+    const verif = await db.collection(collectionName).findOne({_id: new ObjectId(id)})
+    if (verif == null) {
+      throw new Error("Le document n'existe pas");
+
+    }else if (ObjectId.isValid(id) && Object.keys(partialDoc).length !== 0 && !(partialDoc.hasOwnProperty('_id'))) {
+      const updt = await db.collection(collectionName).updateOne({_id: new ObjectId(id)}, {$set: partialDoc});
+
+    }else {
+      throw new Error("Modification non effectuée");
+    }
 }
 
 // BONUS (optionnel) : joinDocuments pourrait être ajouté ici plus tard
