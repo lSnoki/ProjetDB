@@ -231,13 +231,6 @@ async function replaceDocument(collectionName, id, newDoc, dbName = null) {
 
   // TODO ÉTUDIANT 8 : 
   // Utiliser replaceOne avec un filtre sur _id.
-  const verif = await db.collection(collectionName).find(newDoc)
-
-  /*try {
-    
-  } catch (error) {
-    console.error("Erreur", error)
-  }*/
 
   const verifier = await db.collection(collectionName).findOne({_id: new ObjectId(id)})
   
